@@ -1,0 +1,11 @@
+{
+    "sceneWidth" : 50,
+    "sceneLength" : 50,
+    "missingR" : 0.6,
+    "refR" : 0.01,
+    "rdvR" : 0.2,
+    "calibrationMethods" : ["emwnenmf"],
+    "numRuns" : 10,
+    "phenLowerBound": 0.05,
+    "phenUpperBound": 0.15
+}
