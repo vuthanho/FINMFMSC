@@ -13,7 +13,6 @@ Available calibration methods are   : emwnenmf (EM-W-NeNMF from [quote paper])
 import numpy as np
 import argparse
 import json
-import matplotlib.pyplot as plt
 from dataCreator import dataCreator
 
 print('Work in progress')
@@ -33,16 +32,14 @@ with open(args.config_file) as json_data_file:
 Main loop
 '''
 
-for run in range(config['numRuns']):
-    # Data creation
-    data = dataCreator(config['sceneWidth'],
+data = dataCreator(config['sceneWidth'],
         config['sceneLength'],
-        config['missingR'],
+        config['sensorR'],
         config['refR'],
         config['rdvR'],
         config['phenLowerBound'],
-        config['phenUpperBound'],
-        run) # iteration is used as the random seed
-    data.create_scene()
-    plt.imshow(data.S)
-    plt.show()
+        config['phenUpperBound'])
+
+for run in range(config['numRuns']):
+    data.create_scene(run)
+    data.show_scene()
