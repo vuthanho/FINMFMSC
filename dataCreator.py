@@ -23,29 +23,44 @@ class dataCreator():
 
     def create_scene(self,randSeed):
         np.random.seed(randSeed) # Random seed
-        self.S = np.zeros(shape=[self.numArea])
+        # Creation of the map
+        self.S = np.zeros(shape=(self.numArea))
         x = np.linspace(-1,1, num=self.sceneLength)
         y = np.linspace(-1,1, num=self.sceneWidth)
         # Create meshgrid
         xx, yy = np.meshgrid(x,y)
-        pos = np.vstack((xx.ravel(),yy.ravel())).T
+        coord = np.vstack((xx.ravel(),yy.ravel())).T
         # number of pulltion pic fixed to 5
         for _ in range(5):
             mean = np.squeeze(np.array([2*(np.random.rand(1)-0.5),2*(np.random.rand(1)-0.5)]))
             cxy = 0
             cov= np.squeeze(np.array([[self.phenLowerBound + (self.phenUpperBound-self.phenLowerBound)*np.absolute(np.random.randn(1)+0.5),cxy],
                     [cxy,self.phenLowerBound + (self.phenUpperBound-self.phenLowerBound)*np.absolute(np.random.randn(1)+0.5)]]))
-            z = multivariate_normal.pdf(pos,mean=mean,cov=cov)
+            z = multivariate_normal.pdf(coord,mean=mean,cov=cov)
             self.S = self.S + z
         
-        idxRef = np.random.permutation(self.numArea)[0:self.numRef] # Selection of the references
+        # Random locations for the mobile sensors and the references
+        posRef = np.random.permutation(self.numArea)[0:self.numRef] # Selection of the references
         idxSenRdv = np.random.permutation(self.numSensor)[0:self.numRdv] # Selection of the sensors having a rendez-vous
-        idxRefRdv = np.random.randint(self.numRef,size=[self.numSensor]) 
-        idxRefRdv = idxRef[idxRefRdv[0:self.numRdv]] # Selection of the references corresponding to idxSenRdv
+        idxRefRdv = np.random.randint(self.numRef,size=(self.numRdv)) # Selection of the references corresponding to idxSenRdv
 
+        idxSen = np.arange(self.numSensor)
+        idxSen = np.delete(idxSen,idxSenRdv) # Still available sensors
+        freePos = np.arange(self.numArea) 
+        freePos = np.delete(freePos,posRef) # Still available positions
+        posSen = np.random.choice(freePos,size=(self.numSensor-self.numRdv)) # Selection of the positions
+        self.posAll = np.unique(np.concatenate((posRef,posSen))) # All unique positions of sensors and references
+        self.posEmpty = np.arange(self.numArea)
+        self.posEmpty = np.delete(self.posEmpty,self.posAll)
 
-        # self.W = np.zeros(shape=[self.numAreaVisited,self.numSensor+1])
-        # self.G = np.ones([self.numAreaVisited,2])
+        # Computation of W,G,F and X
+        self.W = np.zeros(shape=[self.numArea,self.numSensor+1])
+        self.W[posRef,-1] = 1
+        # np.put(self.W,(self.numSensor+1)*posRef[idxRefRdv]+idxSenRdv,1)
+        self.W[posRef[idxRefRdv],idxSenRdv] = 1
+        self.G = np.ones([self.numArea,2]) # The last column of G is only composed of ones
+        self.G[:,0] = self.S.flat # The first column of G is composed of the true concentration for each area
+
         # self.F = np.zeros([2,self.numSensor+1])
         # self.X = np.zeros([self.numAreaVisited,self.numSensor+1])
 
