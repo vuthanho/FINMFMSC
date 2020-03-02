@@ -63,6 +63,8 @@ class dataCreator():
         self.W[posRef,-1] = 1
         # np.put(self.W,(self.numSensor+1)*posRef[idxRefRdv]+idxSenRdv,1)
         self.W[posRef[idxRefRdv],idxSenRdv] = 1
+        self.nW = self.W-1
+        
         self.G = np.ones([self.numArea,2]) # The last column of G is only composed of ones
         self.G[:,0] = self.S.flat # The first column of G is composed of the true concentration for each area
 
@@ -70,7 +72,15 @@ class dataCreator():
                 np.maximum(self.Bound_beta[0], np.minimum(self.Bound_beta[1], self.Mu_beta+0.5*np.random.randn(1,self.numSensor+1)))])
         self.F[:,-1] = [1,0]
 
-        self.X = np.dot(self.G,self.F)
+        self.Xtheo = np.dot(self.G,self.F)
+        self.X = np.multiply(self.Xtheo,self.W)
+
+        # Computation of omega and phi 
+        self.Omega_G = np.vstack((self.W[:,-1],np.ones(shape=(self.numArea)))).T 
+        self.Omega_F = np.hstack((np.zeros(shape=(2,self.numSensor)), np.ones(shape=(2,1)))) 
+        self.Phi_G = np.vstack((self.X[:,-1],np.ones(shape=(self.numArea)))).T 
+        self.Phi_F = np.zeros(shape=(2,self.numSensor+1))
+        self.Phi_F[0,-1] = 1 
 
     def show_scene(self):
         plt.imshow(self.S.reshape((self.sceneWidth,self.sceneLength)))
