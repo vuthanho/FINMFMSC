@@ -38,8 +38,13 @@ data = dataCreator(config['sceneWidth'],
         config['refR'],
         config['rdvR'],
         config['phenLowerBound'],
-        config['phenUpperBound'])
+        config['phenUpperBound'],
+        config['Mu_beta'],
+        config['Mu_alpha'],
+        config['Bound_beta'],
+        config['Bound_alpha'])
 
 for run in range(config['numRuns']):
-    data.create_scene(run)
-    data.show_scene()
+    data.create_scene(run)      # Ok
+    data.show_scene()           # Ok
+    data.show_measured_scene()  # Ok

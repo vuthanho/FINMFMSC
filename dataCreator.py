@@ -7,15 +7,20 @@ class dataCreator():
     '''
     Generates a pollution scenario
     '''
-    def __init__(self, sceneWidth, sceneLength, sensorR, refR, rdvR, phenLowerBound, phenUpperBound):
+    
+    def __init__(self, sceneWidth, sceneLength, sensorR, refR, rdvR, phenLowerBound, phenUpperBound,Mu_beta,Mu_alpha,Bound_beta,Bound_alpha):
         self.sceneWidth = sceneWidth # Width of the scene
         self.sceneLength = sceneLength # Length of the scene
         self.numArea = self.sceneWidth*self.sceneLength # Number of sampled area in the scene
         self.sensorR = sensorR # Sensor rate : number of sensors/number of areas
         self.refR = refR # Reference rate : number of references/number of areas
         self.rdvR = rdvR # Rendez-vous rate : number of rendez-vous/number of sensors
-        self.phenLowerBound = phenLowerBound # lower bound on the phenomena (air pollution concentrations) standard deviation (log-normal distribution with mean 0)
+        self.phenLowerBound = phenLowerBound # lower bound on the phenomena (air pollution concentrations) standard deviation (normal distribution)
         self.phenUpperBound = phenUpperBound # upper bound "
+        self.Mu_beta    = Mu_beta # Mean sensors offset
+        self.Mu_alpha   = Mu_alpha # Mean sensors gain
+        self.Bound_beta = Bound_beta # Offset boundaries
+        self.Bound_alpha= Bound_alpha # Gain boundaries
         self.numSensor = round(self.numArea*self.sensorR) # Number of sensors in the scene
         self.numRef = round(self.numArea*self.refR) # Number of references in the scene
         self.numRdv = round(self.numSensor*self.rdvR) # Number of sensors having a rendez-vous in the scene
@@ -61,11 +66,20 @@ class dataCreator():
         self.G = np.ones([self.numArea,2]) # The last column of G is only composed of ones
         self.G[:,0] = self.S.flat # The first column of G is composed of the true concentration for each area
 
-        # self.F = np.zeros([2,self.numSensor+1])
-        # self.X = np.zeros([self.numAreaVisited,self.numSensor+1])
+        self.F = np.squeeze([np.maximum(self.Bound_alpha[0], np.minimum(self.Bound_alpha[1], self.Mu_alpha+0.5*np.random.randn(1,self.numSensor+1))),
+                np.maximum(self.Bound_beta[0], np.minimum(self.Bound_beta[1], self.Mu_beta+0.5*np.random.randn(1,self.numSensor+1)))])
+        self.F[:,-1] = [1,0]
+
+        self.X = np.dot(self.G,self.F)
 
     def show_scene(self):
         plt.imshow(self.S.reshape((self.sceneWidth,self.sceneLength)))
+        plt.show()
+
+    def show_measured_scene(self):
+        obs = np.zeros(shape=(self.sceneWidth,self.sceneLength))
+        np.put(obs,self.posAll,1)
+        plt.imshow(np.multiply(obs,self.S.reshape((self.sceneWidth,self.sceneLength))))
         plt.show()
 
 
