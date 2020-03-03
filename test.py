@@ -7,8 +7,20 @@ import numpy as np
 # x = np.random.uniform(size=(100, 3))
 # y = multivariate_normal.pdf(x, mean=mean, cov=cov)
 
-X=np.random.randn(3,5)
-Y=X[X>0]
-print(X)
-print(Y)
+# def f():
+#     X=np.random.randn(3,5)
+#     Y=X[X>0]
+#     return {'test' : Y}
+# res = f()
+# print(res['test'])
 
+X = np.random.randn(3,6)
+GradX = np.random.randn(3,6)
+print(X)
+print(GradX)
+print()
+print(X>0)
+print()
+print(GradX<0)
+print()
+print(np.any(np.dstack((X>0,GradX<0)),2))

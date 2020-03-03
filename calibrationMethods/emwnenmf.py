@@ -1,24 +1,27 @@
 import numpy as np
 import time
 
-def emwnenmf(data,Ginit,Finit,r,Tmax):
+def emwnenmf(data,G,F,r,Tmax):
     MinIter = 10
     tol     = 1e-5
-    T       = np.zeros(shape=(1,301))
-    RRE     = np.zeros(shape=(1,301))
+    em_iter_max = round(Tmax/0.05) # 
+    T       = np.zeros(shape=(em_iter_max+1))
+    RRE     = np.zeros(shape=(em_iter_max+1))
 
     ITER_MAX=500  # maximum inner iteration number (Default)
     ITER_MIN=10   # minimum inner iteration number (Default)
 
-    Xcomp = data.X + np.multiply(data.nW,np.dot(Ginit,Finit))
+    np.put(F,data.idxOF,data.sparsePhi_F)
+    np.put(G,data.idxOG,data.sparsePhi_G)
+    Xcomp = data.X + np.multiply(data.nW,np.dot(G,F))
 
     # Compress left and right
     L,R = RSI_compression(Xcomp,r)
     X_L = np.dot(L,Xcomp)
     X_R = np.dot(Xcomp,R)
 
-    F_comp = np.dot(Finit,R)
-    G_comp = np.dot(L,Ginit)
+    F_comp = np.dot(F,R)
+    G_comp = np.dot(L,G)
 
     FXt = np.dot(F_comp,X_R.T)
     FFt = np.dot(F_comp,F_comp.T)
@@ -26,28 +29,66 @@ def emwnenmf(data,Ginit,Finit,r,Tmax):
     GtX = np.dot(G_comp.T,X_L)
     GtG = np.dot(G_comp.T,G_comp)
 
-    GradG = np.dot(Ginit,FFt)-FXt.T
-    GradF = np.dot(GtG,Finit)-GtX
+    GradG = np.dot(G,FFt)-FXt.T
+    GradF = np.dot(GtG,F)-GtX
 
-    init_delta = stop_rule(np.hstack((Ginit.T,Finit)),np.hstack((GradG.T,GradF)))
+    init_delta = stop_rule(np.hstack((G.T,F)),np.hstack((GradG.T,GradF)))
     tolF = max(tol,1e-3)*init_delta
     tolG = tolF # Stopping tolerance
 
     # Iterative updating
-    G = Ginit.T
+    G = G.T
     k = 0
-    RRE[k] = nmf_norm_fro(Xcomp,G.T,H)
+    RRE[k] = nmf_norm_fro(Xcomp,G.T,F)
     T[k] = 0
     t = time.time()
     # Main loop
-    while(time.time()-t <= Tmax+0.5):
+    while(time.time()-t <= Tmax+0.05):
+        if k>=em_iter_max:
+                break
         # Estimation step
+        if k>0:
+            Xcomp = data.X + np.multiply(data.nW,np.dot(G.T,F))
+            # Compress left and right
+            L,R = RSI_compression(Xcomp,r)
+            X_L = np.dot(L,Xcomp)
+            X_R = np.dot(Xcomp,R)
+
         # Maximisation step
-    return {'G' : G, 'F' : F, 'RRE' : RRE, 'T': T}
+        # Optimize F with fixed G
+        F,iterF,_ = NNLS(F,GtG,GtX,ITER_MIN,ITER_MAX,tolF)
+        np.put(F,data.idxOF,data.sparsePhi_F)  
+        if iterF<=ITER_MIN:
+            tolF = tolF/10
+        F_comp = np.dot(F,R)
+        FFt = np.dot(F,F.T)
+        FXt = np.dot(F_comp,X_R.T)
+        
+        # Optimize G with fixed F
+        G,iterG,GradG = NNLS(G,FFt,FXt,ITER_MIN,ITER_MAX,tolG)
+        np.put(G.T,data.idxOG,data.sparsePhi_G)
+        if iterG<=ITER_MIN:
+            tolG = tolG/10
+        G_comp = np.dot(G,L.T)
+        GtG = np.dot(G_comp,G_comp.T)
+        GtX = np.dot(G_comp,X_L)
+        GradF = np.dot(GtG,F) - GtX
+
+        # Stopping condition
+        delta = stop_rule(np.hstack((G,F)),np.hstack((GradG,GradF)))
+        if (delta<=tol*init_delta and k>=MinIter):
+            break
+
+        if time.time()-t - k*0.05 >= 0.05:
+            k = k+1
+            RRE[k] = nmf_norm_fro(Xcomp,G.T,F)
+            T[k] = time.time()-t
+
+    return {'G' : G.T, 'F' : F, 'RRE' : RRE, 'T': T}
 
 def stop_rule(X,GradX):
     # Stopping Criterions
-    pGrad = GradX[GradX<0|X>0]
+    pGrad = GradX[np.any(np.dstack((X>0,GradX<0)),2)]
     return np.linalg.norm(pGrad,2)
 
 def NNLS(Z,GtG,GtX,iterMin,iterMax,tol):

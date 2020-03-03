@@ -76,11 +76,17 @@ class dataCreator():
         self.X = np.multiply(self.Xtheo,self.W)
 
         # Computation of omega and phi 
-        self.Omega_G = np.vstack((self.W[:,-1],np.ones(shape=(self.numArea)))).T 
-        self.Omega_F = np.hstack((np.zeros(shape=(2,self.numSensor)), np.ones(shape=(2,1)))) 
-        self.Phi_G = np.vstack((self.X[:,-1],np.ones(shape=(self.numArea)))).T 
-        self.Phi_F = np.zeros(shape=(2,self.numSensor+1))
-        self.Phi_F[0,-1] = 1 
+        Omega_G = np.vstack((self.W[:,-1],np.ones(shape=(self.numArea)))).T 
+        Omega_F = np.hstack((np.zeros(shape=(2,self.numSensor)), np.ones(shape=(2,1)))) 
+        Phi_G = np.vstack((self.X[:,-1],np.ones(shape=(self.numArea)))).T 
+        Phi_F = np.zeros(shape=(2,self.numSensor+1))
+        Phi_F[0,-1] = 1 
+
+        # Faster access to the fixed values, done to avoid time consuming Hadamard product
+        self.idxOG = np.argwhere(Omega_G.flat)
+        self.sparsePhi_G = Phi_G.flat[self.idxOG]
+        self.idxOF = np.argwhere(Omega_F.flat)
+        self.sparsePhi_F = Phi_F.flat[self.idxOF]
 
     def show_scene(self):
         plt.imshow(self.S.reshape((self.sceneWidth,self.sceneLength)))
