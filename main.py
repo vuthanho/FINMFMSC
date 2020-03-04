@@ -14,6 +14,8 @@ import numpy as np
 import argparse
 import json
 from dataCreator import dataCreator
+from calibrationMethods.emwnenmf import emwnenmf
+
 
 print('Work in progress')
 
@@ -43,8 +45,20 @@ data = dataCreator(config['sceneWidth'],
         config['Mu_alpha'],
         config['Bound_beta'],
         config['Bound_alpha'])
+m,n = data.X.shape
+Res = {}
 
 for run in range(config['numRuns']):
-    data.create_scene(run)      # Ok
-    data.show_scene()           # Ok
-    data.show_measured_scene()  # Ok
+    data.create_scene(run)
+    # ONLY EMWNENMF HAS BEEN CODED FOR NOW
+    for method in config['calibrationMethods']:
+        calMethod = locals()[method]
+        res = calMethod(data,np.random.rand(m,2),np.random.rand(2,n),config['r'],config['Tmax'])
+        calStats = calibrationStatistics(data,res)
+        Res.update({ m + '_run_'+str(run): calStats})
+    # data.show_scene()           
+    # data.show_measured_scene()  
+
+# plot the results NOT DONE FOR NOW
+# if config['statsToPlot']:
+#     ResultPlotter(Results,config['statsToPlot'],config['calibrationMethods'],config['numRuns'])

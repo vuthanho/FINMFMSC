@@ -1,7 +1,7 @@
 {
-    "sceneWidth" : 100,
-    "sceneLength" : 100,
-    "sensorR" : 0.5,
+    "sceneWidth" : 50,
+    "sceneLength" : 50,
+    "sensorR" : 0.6,
     "refR" : 0.02,
     "rdvR" : 0.3,
     "calibrationMethods" : ["emwnenmf"],
@@ -11,5 +11,7 @@
     "Mu_beta" : 2, 
     "Mu_alpha" : 0.9,
     "Bound_beta" : [0.5,3.5], 
-    "Bound_alpha" : [0.5,1.5]
+    "Bound_alpha" : [0.5,1.5],
+    "Tmax" : 10,
+    "r" : 10
 }
