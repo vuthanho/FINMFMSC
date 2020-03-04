@@ -1,9 +1,9 @@
 {
-    "sceneWidth" : 20,
-    "sceneLength" : 20,
-    "sensorR" : 0.3,
+    "sceneWidth" : 100,
+    "sceneLength" : 100,
+    "sensorR" : 0.5,
     "refR" : 0.02,
-    "rdvR" : 0.5,
+    "rdvR" : 0.3,
     "calibrationMethods" : ["emwnenmf"],
     "numRuns" : 3,
     "phenLowerBound" : 0.05,

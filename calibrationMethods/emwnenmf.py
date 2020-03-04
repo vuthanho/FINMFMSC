@@ -4,9 +4,10 @@ import time
 def emwnenmf(data,G,F,r,Tmax):
     MinIter = 10
     tol     = 1e-5
-    em_iter_max = round(Tmax/0.05) # 
+    em_iter_max = round(Tmax/0.05)+1 # 
     T       = np.zeros(shape=(em_iter_max+1))
     RRE     = np.zeros(shape=(em_iter_max+1))
+    # RREb    = np.zeros(shape=(em_iter_max+1))
 
     ITER_MAX=500  # maximum inner iteration number (Default)
     ITER_MIN=10   # minimum inner iteration number (Default)
@@ -40,12 +41,12 @@ def emwnenmf(data,G,F,r,Tmax):
     G = G.T
     k = 0
     RRE[k] = nmf_norm_fro(Xcomp,G.T,F)
+    # RREb[k] = nmf_norm_fro(data.X,G.T,F,data.W)
     T[k] = 0
     t = time.time()
     # Main loop
     while(time.time()-t <= Tmax+0.05):
-        if k>=em_iter_max:
-                break
+
         # Estimation step
         if k>0:
             Xcomp = data.X + np.multiply(data.nW,np.dot(G.T,F))
@@ -82,8 +83,10 @@ def emwnenmf(data,G,F,r,Tmax):
         if time.time()-t - k*0.05 >= 0.05:
             k = k+1
             RRE[k] = nmf_norm_fro(Xcomp,G.T,F)
+            # RREb[k] = nmf_norm_fro(data.X,G.T,F,data.W)
             T[k] = time.time()-t
 
+    # return {'G' : G.T, 'F' : F, 'RRE' : RRE, 'T': T, 'RREb' : RREb}
     return {'G' : G.T, 'F' : F, 'RRE' : RRE, 'T': T}
 
 def stop_rule(X,GradX):
@@ -114,8 +117,13 @@ def NNLS(Z,GtG,GtX,iterMin,iterMax,tol):
     return H,iter,Grad
 
 
-def nmf_norm_fro(X,G,F):
-    f = np.square(np.linalg.norm(X-np.dot(G,F),'fro'))/np.square(np.linalg.norm(X,'fro'))
+def nmf_norm_fro(X,G,F,*args):
+    W = args
+    if len(W)==0:
+        f = np.square(np.linalg.norm(X-np.dot(G,F),'fro'))/np.square(np.linalg.norm(X,'fro'))
+    else:
+        W=W[0]
+        f = np.square(np.linalg.norm(X-np.multiply(W,np.dot(G,F)),'fro'))/np.square(np.linalg.norm(X,'fro'))
     return f
 
 def RSI_compression(X,r):

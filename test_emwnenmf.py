@@ -25,17 +25,23 @@ data = dataCreator(config['sceneWidth'],
         config['Bound_beta'],
         config['Bound_alpha'])
 
-data.create_scene(0)
+data.create_scene(987)
 m,n = data.X.shape
-Ginit = 1+np.random.rand(m,2)
-Finit = 1+np.random.randn(2,n)
-Finit[1,:] = Finit[1,:]+1
+# Ginit = 1+np.random.rand(m,2)
+# Finit = 1+np.random.randn(2,n)
+# Finit[1,:] = Finit[1,:]+1
 r = 15
 Tmax = 10
-res = emwnenmf(data,data.G,data.F,r,Tmax)
+res = emwnenmf(data,np.random.rand(m,2),np.random.rand(2,n),r,Tmax)
 plt.plot(res['RRE'])
 plt.show()
-print(data.F.T)
-print()
-print(res['F'].T)
+data.show_measured_scene()
+# plt.subplot(1,2,1)
+# plt.plot(res['RRE'])
+# plt.subplot(1,2,2)
+# plt.plot(res['RREb'])
+# plt.show()
+# print(data.F.T)
+# print()
+# print(res['F'].T)
 

@@ -63,7 +63,7 @@ class dataCreator():
         self.W[posRef,-1] = 1
         # np.put(self.W,(self.numSensor+1)*posRef[idxRefRdv]+idxSenRdv,1)
         self.W[posRef[idxRefRdv],idxSenRdv] = 1
-        self.nW = self.W-1
+        self.nW = 1-self.W
         
         self.G = np.ones([self.numArea,2]) # The last column of G is only composed of ones
         self.G[:,0] = self.S.flat # The first column of G is composed of the true concentration for each area
