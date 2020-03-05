@@ -5,8 +5,10 @@ def emwnenmf(data,G,F,r,Tmax):
     MinIter = 10
     tol     = 1e-5
     em_iter_max = round(Tmax/0.05)+1 # 
-    T       = np.zeros(shape=(em_iter_max+1))
-    RRE     = np.zeros(shape=(em_iter_max+1))
+    T       = np.empty(shape=(em_iter_max+1))
+    T.fill(np.nan)
+    RRE     = np.empty(shape=(em_iter_max+1))
+    RRE.fill(np.nan)
     # RREb    = np.zeros(shape=(em_iter_max+1))
 
     ITER_MAX=500  # maximum inner iteration number (Default)

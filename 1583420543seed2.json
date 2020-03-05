@@ -1,6 +1,6 @@
 {
-    "sceneWidth" : 50,
-    "sceneLength" : 50,
+    "sceneWidth" : 100,
+    "sceneLength" : 100,
     "sensorR" : 0.6,
     "refR" : 0.02,
     "rdvR" : 0.3,

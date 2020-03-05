@@ -25,17 +25,18 @@ data = dataCreator(config['sceneWidth'],
         config['Bound_beta'],
         config['Bound_alpha'])
 
-data.create_scene(987)
+seed = np.random.randint(1000)
+data.create_scene(seed)
+print('random seed : '+str(seed))
 m,n = data.X.shape
 # Ginit = 1+np.random.rand(m,2)
 # Finit = 1+np.random.randn(2,n)
 # Finit[1,:] = Finit[1,:]+1
-r = 15
-Tmax = 10
-res = emwnenmf(data,np.random.rand(m,2),np.random.rand(2,n),r,Tmax)
-plt.plot(res['RRE'])
+
+res = emwnenmf(data,np.random.rand(m,2),np.random.rand(2,n),config['r'],config['Tmax'])
+plt.plot(res['T'],res['RRE'])
 plt.show()
-data.show_measured_scene()
+
 # plt.subplot(1,2,1)
 # plt.plot(res['RRE'])
 # plt.subplot(1,2,2)

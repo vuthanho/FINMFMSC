@@ -13,7 +13,9 @@ Available calibration methods are   : emwnenmf (EM-W-NeNMF from [quote paper])
 import numpy as np
 import argparse
 import json
+import matplotlib.pyplot as plt
 from dataCreator import dataCreator
+from calibrationStatistics import calibrationStatistics
 from calibrationMethods.emwnenmf import emwnenmf
 
 
@@ -39,13 +41,15 @@ data = dataCreator(config['sceneWidth'],
         config['sensorR'],
         config['refR'],
         config['rdvR'],
+        config['mvR'],
         config['phenLowerBound'],
         config['phenUpperBound'],
         config['Mu_beta'],
         config['Mu_alpha'],
         config['Bound_beta'],
         config['Bound_alpha'])
-m,n = data.X.shape
+m = data.numArea
+n = data.numSensor+1
 Res = {}
 
 for run in range(config['numRuns']):
@@ -55,9 +59,16 @@ for run in range(config['numRuns']):
         calMethod = locals()[method]
         res = calMethod(data,np.random.rand(m,2),np.random.rand(2,n),config['r'],config['Tmax'])
         calStats = calibrationStatistics(data,res)
-        Res.update({ m + '_run_'+str(run): calStats})
+        Res.update({ method + '_run_'+str(run): calStats})
+        print(calStats)
+        print()
+        print(res['F'][:,0:5])
+        print()
+        print(data.F[:,0:5])
+        print()
+        plt.semilogy(res['T'],res['RRE'])
+        plt.show()
     # data.show_scene()           
-    # data.show_measured_scene()  
 
 # plot the results NOT DONE FOR NOW
 # if config['statsToPlot']:

@@ -8,13 +8,14 @@ class dataCreator():
     Generates a pollution scenario
     '''
     
-    def __init__(self, sceneWidth, sceneLength, sensorR, refR, rdvR, phenLowerBound, phenUpperBound,Mu_beta,Mu_alpha,Bound_beta,Bound_alpha):
+    def __init__(self, sceneWidth, sceneLength, sensorR, refR, rdvR, mvR, phenLowerBound, phenUpperBound,Mu_beta,Mu_alpha,Bound_beta,Bound_alpha):
         self.sceneWidth = sceneWidth # Width of the scene
         self.sceneLength = sceneLength # Length of the scene
         self.numArea = self.sceneWidth*self.sceneLength # Number of sampled area in the scene
         self.sensorR = sensorR # Sensor rate : number of sensors/number of areas
         self.refR = refR # Reference rate : number of references/number of areas
         self.rdvR = rdvR # Rendez-vous rate : number of rendez-vous/number of sensors
+        self.mvR = mvR # missing value rate
         self.phenLowerBound = phenLowerBound # lower bound on the phenomena (air pollution concentrations) standard deviation (normal distribution)
         self.phenUpperBound = phenUpperBound # upper bound "
         self.Mu_beta    = Mu_beta # Mean sensors offset
@@ -49,20 +50,36 @@ class dataCreator():
         idxSenRdv = np.random.permutation(self.numSensor)[0:self.numRdv] # Selection of the sensors having a rendez-vous
         idxRefRdv = np.random.randint(self.numRef,size=(self.numRdv)) # Selection of the references corresponding to idxSenRdv
 
-        idxSen = np.arange(self.numSensor)
-        idxSen = np.delete(idxSen,idxSenRdv) # Still available sensors
-        freePos = np.arange(self.numArea) 
-        freePos = np.delete(freePos,posRef) # Still available positions
-        posSen = np.random.choice(freePos,size=(self.numSensor-self.numRdv)) # Selection of the positions
-        self.posAll = np.unique(np.concatenate((posRef,posSen))) # All unique positions of sensors and references
-        self.posEmpty = np.arange(self.numArea)
-        self.posEmpty = np.delete(self.posEmpty,self.posAll)
+        # ##################################################################
+        # Pourquoi les rendez-vous devraient être limités à un par capteur ?
+        # ##################################################################
+
+        # idxSen = np.arange(self.numSensor)
+        # idxSen = np.delete(idxSen,idxSenRdv) # Still available sensors
+        # freePos = np.arange(self.numArea) 
+        # freePos = np.delete(freePos,posRef) # Still available positions
+        # posSen = np.random.choice(freePos,size=(self.numSensor-self.numRdv)) # Selection of the positions
+        # self.posAll = np.unique(np.concatenate((posRef,posSen))) # All unique positions of sensors and references
+        # self.posEmpty = np.arange(self.numArea)
+        # self.posEmpty = np.delete(self.posEmpty,self.posAll)
 
         # Computation of W,G,F and X
         self.W = np.zeros(shape=[self.numArea,self.numSensor+1])
-        self.W[posRef,-1] = 1
-        # np.put(self.W,(self.numSensor+1)*posRef[idxRefRdv]+idxSenRdv,1)
-        self.W[posRef[idxRefRdv],idxSenRdv] = 1
+
+        # The references
+        self.W[posRef,-1] = 1 
+
+        # The sensors having a rendez-vous
+        self.W[posRef[idxRefRdv],idxSenRdv] = 1 # np.put(self.W,(self.numSensor+1)*posRef[idxRefRdv]+idxSenRdv,1)
+        
+        # The other sensors
+        Ndata = round((1-self.mvR)*self.numSensor*(self.numArea-self.numRef))
+        posSen = np.delete(np.arange(self.numArea),posRef)
+        xx, yy = np.meshgrid(posSen,np.arange(self.numSensor))
+        idx_mesh_sensor = np.random.permutation((self.numArea-self.numRef)*self.numSensor)[0:Ndata]
+        self.W[xx.flat[idx_mesh_sensor],yy.flat[idx_mesh_sensor]] = 1
+
+        # The areas that are not measured
         self.nW = 1-self.W
         
         self.G = np.ones([self.numArea,2]) # The last column of G is only composed of ones
@@ -92,11 +109,11 @@ class dataCreator():
         plt.imshow(self.S.reshape((self.sceneWidth,self.sceneLength)))
         plt.show()
 
-    def show_measured_scene(self):
-        obs = np.zeros(shape=(self.sceneWidth,self.sceneLength))
-        np.put(obs,self.posAll,1)
-        plt.imshow(np.multiply(obs,self.S.reshape((self.sceneWidth,self.sceneLength))))
-        plt.show()
+    # def show_measured_scene(self):
+    #     obs = np.zeros(shape=(self.sceneWidth,self.sceneLength))
+    #     np.put(obs,self.posAll,1)
+    #     plt.imshow(np.multiply(obs,self.S.reshape((self.sceneWidth,self.sceneLength))))
+    #     plt.show()
 
 
 
