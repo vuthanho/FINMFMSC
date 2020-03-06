@@ -36,8 +36,8 @@ class dataCreator():
         # Create meshgrid
         xx, yy = np.meshgrid(x,y)
         coord = np.vstack((xx.ravel(),yy.ravel())).T
-        # number of pulltion pic fixed to 5
-        for _ in range(5):
+        # number of pulltion pic fixed to 10
+        for _ in range(10):
             mean = np.squeeze(np.array([2*(np.random.rand(1)-0.5),2*(np.random.rand(1)-0.5)]))
             cxy = 0
             cov= np.squeeze(np.array([[self.phenLowerBound + (self.phenUpperBound-self.phenLowerBound)*np.absolute(np.random.randn(1)+0.5),cxy],

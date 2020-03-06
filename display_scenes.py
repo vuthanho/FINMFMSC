@@ -54,23 +54,5 @@ Res = {}
 
 for run in range(config['numRuns']):
     data.create_scene(run)
-    # ONLY EMWNENMF HAS BEEN CODED FOR NOW
-    # data.show_scene()
-    for method in config['calibrationMethods']:
-        calMethod = locals()[method]
-        res = calMethod(data,2*np.random.randn(m,2),1+np.random.rand(2,n),config['r'],config['Tmax'])
-        # res = calMethod(data,data.G,data.F,config['r'],config['Tmax'])
-        calStats = calibrationStatistics(data,res)
-        Res.update({ method + '_run_'+str(run): calStats})
-        print()
-        print('Elapsed time : '+str(res['T'][-1])+'\n')
-        print(str(calStats)+'\n')
-        print(str(res['F'][:,0:5])+'\n')
-        print(str(data.F[:,0:5])+'\n')
-        plt.semilogy(res['T'],res['RRE'])
-        plt.show()
-               
-
-# plot the results NOT DONE FOR NOW
-# if config['statsToPlot']:
-#     ResultPlotter(Results,config['statsToPlot'],config['calibrationMethods'],config['numRuns'])
+    data.show_scene()
+    print(data.W)

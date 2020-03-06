@@ -12,7 +12,7 @@ def emwnenmf(data,G,F,r,Tmax):
     # RREb    = np.zeros(shape=(em_iter_max+1))
 
     ITER_MAX=500  # maximum inner iteration number (Default)
-    ITER_MIN=15   # minimum inner iteration number (Default)
+    ITER_MIN=50   # minimum inner iteration number (Default)
 
     np.put(F,data.idxOF,data.sparsePhi_F)
     np.put(G,data.idxOG,data.sparsePhi_G)
@@ -59,8 +59,8 @@ def emwnenmf(data,G,F,r,Tmax):
 
         # Maximisation step
         # Optimize F with fixed G
-        F,iterF,_ = NNLS(F,GtG,GtX,ITER_MIN,ITER_MAX,tolF)
-        np.put(F,data.idxOF,data.sparsePhi_F)
+        F,iterF,_ = NNLS(F,GtG,GtX,ITER_MIN,ITER_MAX,tolF,data.idxOF,data.sparsePhi_F,0)
+        # np.put(F,data.idxOF,data.sparsePhi_F)  ### NOW IN NNLS
         if iterF<=ITER_MIN:
             tolF = tolF/10
             print('Tweaked F tolerance to '+str(tolF))
@@ -69,8 +69,8 @@ def emwnenmf(data,G,F,r,Tmax):
         FXt = np.dot(F_comp,X_R.T)
         
         # Optimize G with fixed F
-        G,iterG,GradG = NNLS(G,FFt,FXt,ITER_MIN,ITER_MAX,tolG)
-        np.put(G.T,data.idxOG,data.sparsePhi_G)
+        G,iterG,GradG = NNLS(G,FFt,FXt,ITER_MIN,ITER_MAX,tolG,data.idxOG,data.sparsePhi_G,1)
+        # np.put(G.T,data.idxOG,data.sparsePhi_G)  ### NOW IN NNLS
         if iterG<=ITER_MIN:
             tolG = tolG/10
             print('Tweaked G tolerance to '+str(tolG))
@@ -99,7 +99,7 @@ def stop_rule(X,GradX):
     pGrad = GradX[np.any(np.dstack((X>0,GradX<0)),2)]
     return np.linalg.norm(pGrad,2)
 
-def NNLS(Z,GtG,GtX,iterMin,iterMax,tol):
+def NNLS(Z,GtG,GtX,iterMin,iterMax,tol,idxfixed,fixed,transposed):
     L = np.linalg.norm(GtG,2) # Lipschitz constant
     H = Z # Initialization
     Grad = np.dot(GtG,Z)-GtX #Gradient
@@ -108,6 +108,10 @@ def NNLS(Z,GtG,GtX,iterMin,iterMax,tol):
     for iter in range(1,iterMax+1):
         H0 = H
         H = np.maximum(Z-Grad/L,0) # Calculate squence 'Y'
+        if transposed: # If Z = G.T
+            np.put(H.T,idxfixed,fixed)
+        else: # If Z = F
+            np.put(H,idxfixed,fixed)
         alpha2 = 0.5*(1+np.sqrt(1+4*alpha1**2))
         Z = H + ((alpha1-1)/alpha2)*(H-H0)
         alpha1 = alpha2
