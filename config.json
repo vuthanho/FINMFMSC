@@ -13,6 +13,6 @@
     "Mu_alpha" : 1,
     "Bound_beta" : [0.5,3.5], 
     "Bound_alpha" : [0.7,1.7],
-    "Tmax" : 20,
+    "Tmax" : 30,
     "r" : 10
 }

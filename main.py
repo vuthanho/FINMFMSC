@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from dataCreator import dataCreator
 from calibrationStatistics import calibrationStatistics
 from calibrationMethods.emwnenmf import emwnenmf
+from calibrationMethods.incal import incal
 
 
 print('Work in progress')
@@ -58,16 +59,15 @@ for run in range(config['numRuns']):
     # data.show_scene()
     for method in config['calibrationMethods']:
         calMethod = locals()[method]
+        np.random.seed(run**2)
         res = calMethod(data,2*np.random.randn(m,2),1+np.random.rand(2,n),config['r'],config['Tmax'])
-        # res = calMethod(data,data.G,data.F,config['r'],config['Tmax'])
-        calStats = calibrationStatistics(data,res)
-        Res.update({ method + '_run_'+str(run): calStats})
+        # res = calMethod(data,5+np.random.randn(m,2),np.add(np.random.randn(2,n),[config['Mu_alpha'],config['Mu_beta']]),config['r'],config['Tmax'])
         print()
         print('Elapsed time : '+str(res['T'][-1])+'\n')
-        print(str(calStats)+'\n')
         print(str(res['F'][:,0:5])+'\n')
         print(str(data.F[:,0:5])+'\n')
-        plt.semilogy(res['T'],res['RRE'])
+        plt.semilogy(res['T'],res['RMSE'][0,:])
+        plt.semilogy(res['T'],res['RMSE'][1,:])
         plt.show()
                
 
