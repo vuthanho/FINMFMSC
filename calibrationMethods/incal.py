@@ -3,19 +3,20 @@ import time
 
 def incal(data,G,F,r,Tmax):
     W2 = np.square(data.W)
-    iter_max = int(1200)
+    delta_measure = 1
+    iter_max = round(Tmax/delta_measure)+1 
     secu = 1e-12
-    T       = np.empty(shape=(iter_max))
+    T       = np.empty(shape=(iter_max+1))
     T.fill(np.nan)
-    RMSE    = np.empty(shape=(2,iter_max))
+    RMSE    = np.empty(shape=(2,iter_max+1))
     RMSE.fill(np.nan)
     delta_G = G
     delta_F = F
     t = time.time()
     T[0]=time.time()-t
     RMSE[:,0] = np.linalg.norm(F[:,0:-1]-data.F[:,0:-1],2,axis=1)/np.sqrt(F.shape[1]-1)
-
-    for i in range(1,iter_max):
+    i=0
+    while(time.time()-t <= Tmax+delta_measure):
         
         # Updating G
         np.put(delta_G,data.idxOG,0)
@@ -68,10 +69,14 @@ def incal(data,G,F,r,Tmax):
         np.put(F,data.idxOF,data.sparsePhi_F)
 
         # Saving results for this iteration
-        T[i]=time.time()-t
-        RMSE[:,i] = np.linalg.norm(F[:,0:-1]-data.F[:,0:-1],2,axis=1)/np.sqrt(F.shape[1]-1)
-        # print(str(i)+'   '+str(T[i])+'  '+str(RMSE[0,i]))
-    return {'G' : G, 'F' : F, 'RMSE' : RMSE, 'T': T}
+        if time.time()-t - i*delta_measure >= delta_measure:
+            i = i+1
+            RMSE[:,i] = np.linalg.norm(F[:,0:-1]-data.F[:,0:-1],2,axis=1)/np.sqrt(F.shape[1]-1)
+            T[i] = time.time()-t
+            # if i%100==0:
+            #     print(str(i)+'   '+str(RMSE[0,i])+'   '+str(RMSE[1,i]))
+    # return {'G' : G, 'F' : F, 'RMSE' : RMSE, 'T': T}
+    return {'RMSE' : RMSE, 'T': T}
 
 def secu_plus(tutu,s):
     toto = np.maximum(tutu,s)

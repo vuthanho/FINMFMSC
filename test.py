@@ -14,13 +14,24 @@ import numpy as np
 # res = f()
 # print(res['test'])
 
-X = np.random.randn(3,6)
-GradX = np.random.randn(3,6)
-print(X)
-print(GradX)
-print()
-print(X>0)
-print()
-print(GradX<0)
-print()
-print(np.any(np.dstack((X>0,GradX<0)),2))
+# X = np.random.randn(3,6)
+# GradX = np.random.randn(3,6)
+# print(X)
+# print(GradX)
+# print()
+# print(X>0)
+# print()
+# print(GradX<0)
+# print()
+# print(np.any(np.dstack((X>0,GradX<0)),2))
+
+Res = {}
+Res.update({"emwnenmf" : {}})
+Res.update({"incal" : []})
+for i in range(10):
+    Res['emwnenmf'].update({i : i})
+m = 'emwnenmf'
+print(Res[m][9])
+
+Res['incal'].append(np.arange(10))
+print(Res['incal'][0].min())

@@ -16,8 +16,10 @@ import json
 import matplotlib.pyplot as plt
 from dataCreator import dataCreator
 from calibrationStatistics import calibrationStatistics
+# from calibrationMethods.emwnenmf_updateinsideNNLS import emwnenmf
 from calibrationMethods.emwnenmf import emwnenmf
 from calibrationMethods.incal import incal
+from save2dat import save2dat
 
 
 print('Work in progress')
@@ -51,26 +53,28 @@ data = dataCreator(config['sceneWidth'],
         config['Bound_alpha'])
 m = data.numArea
 n = data.numSensor+1
-Res = {}
+RMSE = {}
+T = {}
+for method in config['calibrationMethods']:
+    RMSE.update({method : []}) 
+    T.update({method : []}) 
 
 for run in range(config['numRuns']):
     data.create_scene(run)
-    # ONLY EMWNENMF HAS BEEN CODED FOR NOW
+    # ONLY EMWNENMF AND INCAL HAVE BEEN CODED FOR NOW
     # data.show_scene()
+    print('run : '+str(run))
     for method in config['calibrationMethods']:
+        print('method : '+method)
         calMethod = locals()[method]
-        np.random.seed(run**2)
-        res = calMethod(data,2*np.random.randn(m,2),1+np.random.rand(2,n),config['r'],config['Tmax'])
-        # res = calMethod(data,5+np.random.randn(m,2),np.add(np.random.randn(2,n),[config['Mu_alpha'],config['Mu_beta']]),config['r'],config['Tmax'])
-        print()
-        print('Elapsed time : '+str(res['T'][-1])+'\n')
-        print(str(res['F'][:,0:5])+'\n')
-        print(str(data.F[:,0:5])+'\n')
-        plt.semilogy(res['T'],res['RMSE'][0,:])
-        plt.semilogy(res['T'],res['RMSE'][1,:])
-        plt.show()
+        res = calMethod(data,data.Ginit,data.Finit,config['r'],config['Tmax'])
+        if run == 0:
+            RMSE[method] = res['RMSE']
+            T[method]    = res['T']
+        else:
+            RMSE[method] = np.vstack((RMSE[method],res['RMSE']))
+            T[method]    = np.vstack((T[method],res['T']))
+        print('RMSE : '+str(res['RMSE'][0][-1]))
                
-
-# plot the results NOT DONE FOR NOW
-# if config['statsToPlot']:
-#     ResultPlotter(Results,config['statsToPlot'],config['calibrationMethods'],config['numRuns'])
+if config['save2dat']:
+        save2dat(RMSE,T,config['calibrationMethods'],config['numRuns'])

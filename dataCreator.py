@@ -105,6 +105,13 @@ class dataCreator():
         self.idxOF = np.argwhere(self.Omega_F.flat)
         self.sparsePhi_F = self.Phi_F.flat[self.idxOF]
 
+        # Initial F and G
+        mu = np.array([self.Mu_alpha,self.Mu_beta])
+        mu = mu[:,np.newaxis]
+        self.Finit = np.absolute(np.add(np.random.randn(2,self.numSensor+1),mu))
+        self.Ginit = np.random.choice(np.squeeze(self.sparsePhi_G),size=(self.numArea,2))+np.maximum(np.min(self.sparsePhi_G),np.random.randn(self.numArea,2))
+        np.put(self.Ginit,self.idxOG,self.sparsePhi_G)
+
     def show_scene(self):
         plt.imshow(self.S.reshape((self.sceneWidth,self.sceneLength)))
         plt.show()

@@ -55,4 +55,4 @@ Res = {}
 for run in range(config['numRuns']):
     data.create_scene(run)
     data.show_scene()
-    print(data.W)
+    # print(data.W)

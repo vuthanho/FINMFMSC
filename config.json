@@ -1,6 +1,6 @@
 {
-    "sceneWidth" : 50,
-    "sceneLength" : 50,
+    "sceneWidth" : 10,
+    "sceneLength" : 10,
     "sensorR" : 0.25,
     "refR" : 0.04,
     "rdvR" : 0.3,
@@ -14,5 +14,6 @@
     "Bound_beta" : [0.5,3.5], 
     "Bound_alpha" : [0.7,1.7],
     "Tmax" : 30,
-    "r" : 10
+    "r" : 10,
+    "save2dat" : 1
 }
