@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import matplotlib.pyplot as plt
 
 def incal(data,G,F,r,Tmax):
     W2 = np.square(data.W)

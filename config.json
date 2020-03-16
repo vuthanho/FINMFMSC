@@ -6,7 +6,7 @@
     "rdvR" : 0.3,
     "mvR" : 0.8,
     "calibrationMethods" : ["emwnenmf"],
-    "numRuns" : 1,
+    "numRuns" : 4,
     "phenLowerBound" : 0.05,
     "phenUpperBound" : 0.15,
     "Mu_beta" : 2, 

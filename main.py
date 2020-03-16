@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from dataCreator import dataCreator
 from calibrationStatistics import calibrationStatistics
 # from calibrationMethods.emwnenmf_updateinsideNNLS import emwnenmf
-from calibrationMethods.emwnenmf import emwnenmf
+from calibrationMethods.emwnenmf_seprestart import emwnenmf
 from calibrationMethods.incal import incal
 from save2dat import save2dat
 
@@ -74,7 +74,7 @@ for run in range(config['numRuns']):
         else:
             RMSE[method] = np.vstack((RMSE[method],res['RMSE']))
             T[method]    = np.vstack((T[method],res['T']))
-        print('RMSE : '+str(res['RMSE'][0][-1]))
+        print('RMSE : '+str(res['RMSE'][0][-1])+'   '+str(res['RMSE'][1][-1]))
                
 if config['save2dat']:
         save2dat(RMSE,T,config['calibrationMethods'],config['numRuns'])

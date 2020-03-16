@@ -1,8 +1,8 @@
 import numpy as np
 import time
+import matplotlib.pyplot as plt
 
 def emwnenmf(data,G,F,r,Tmax):
-    OutIter = 30
     tol     = 1e-5
     delta_measure = 1
     em_iter_max = round(Tmax/delta_measure)+1 # 
@@ -10,18 +10,18 @@ def emwnenmf(data,G,F,r,Tmax):
     T.fill(np.nan)
     RMSE    = np.empty(shape=(2,em_iter_max+1))
     RMSE.fill(np.nan)
-    
+
     ITER_MAX=200  # maximum inner iteration number (Default)
     ITER_MIN=10   # minimum inner iteration number (Default)
 
     np.put(F,data.idxOF,data.sparsePhi_F)
     np.put(G,data.idxOG,data.sparsePhi_G)
-    Xcomp = data.X + np.multiply(data.nW,np.dot(G,F))
+    X = data.X + np.multiply(data.nW,np.dot(G,F))
 
-    FXt = np.dot(F,Xcomp.T)
+    FXt = np.dot(F,X.T)
     FFt = np.dot(F,F.T)
 
-    GtX = np.dot(G.T,Xcomp)
+    GtX = np.dot(G.T,X)
     GtG = np.dot(G.T,G)
 
     GradG = np.dot(G,FFt)-FXt.T
@@ -41,47 +41,39 @@ def emwnenmf(data,G,F,r,Tmax):
     while(time.time()-t <= Tmax+delta_measure):
 
         # Estimation step
-        Xcomp = data.X + np.multiply(data.nW,np.dot(G.T,F))
-        # Compress left and right
-        L,R = RSI_compression(Xcomp,r)
-        X_L = np.dot(L,Xcomp)
-        X_R = np.dot(Xcomp,R)
+        X = data.X + np.multiply(data.nW,np.dot(G.T,F))
 
         # Maximisation step
-        for _ in range(OutIter):
-            # Optimize F with fixed G
-            np.put(F,data.idxOF,0)
-            F,iterF,_ = NNLS(F,GtG,GtX-GtG.dot(data.Phi_F),ITER_MIN,ITER_MAX,tolF,data.idxOF,False)
-            np.put(F,data.idxOF,data.sparsePhi_F)
-            # print(F[:,0:5])
-            if iterF<=ITER_MIN:
-                tolF = tolF/10
-                # print('Tweaked F tolerance to '+str(tolF))
-            F_comp = np.dot(F,R)
-            FFt = np.dot(F_comp,F_comp.T)
-            FXt = np.dot(F_comp,X_R.T)
-            
-            # Optimize G with fixed F
-            np.put(G.T,data.idxOG,0)
-            G,iterG,GradG = NNLS(G,FFt,FXt-FFt.dot(data.Phi_G.T),ITER_MIN,ITER_MAX,tolG,data.idxOG,True)
-            np.put(G.T,data.idxOG,data.sparsePhi_G)
-            if iterG<=ITER_MIN:
-                tolG = tolG/10
-                # print('Tweaked G tolerance to '+str(tolG))
-            G_comp = np.dot(G,L.T)
-            GtG = np.dot(G_comp,G_comp.T)
-            GtX = np.dot(G_comp,X_L)
-            GradF = np.dot(GtG,F) - GtX
+        # Optimize F with fixed G
+        np.put(F,data.idxOF,0)
+        F,iterF,_ = NNLS(F,GtG,GtX-GtG.dot(data.Phi_F),ITER_MIN,ITER_MAX,tolF,data.idxOF,False)
+        np.put(F,data.idxOF,data.sparsePhi_F)
+        # print(F[:,0:5])
+        if iterF<=ITER_MIN:
+            tolF = tolF/10
+            # print('Tweaked F tolerance to '+str(tolF))
+        FFt = np.dot(F,F.T)
+        FXt = np.dot(F,X.T)
+        
+        # Optimize G with fixed F
+        np.put(G.T,data.idxOG,0)
+        G,iterG,GradG = NNLS(G,FFt,FXt-FFt.dot(data.Phi_G.T),ITER_MIN,ITER_MAX,tolG,data.idxOG,True)
+        np.put(G.T,data.idxOG,data.sparsePhi_G)
+        if iterG<=ITER_MIN:
+            tolG = tolG/10
+            # print('Tweaked G tolerance to '+str(tolG))
+        GtG = np.dot(G,G.T)
+        GtX = np.dot(G,X)
+        GradF = np.dot(GtG,F) - GtX
 
-            if time.time()-t - k*delta_measure >= delta_measure:
-                k = k+1
-                if k>= em_iter_max+1:
-                    break
-                RMSE[:,k] = np.linalg.norm(F[:,0:-1]-data.F[:,0:-1],2,axis=1)/np.sqrt(F.shape[1]-1)
-                T[k] = time.time()-t
-                # if k%100==0:
-                #     print(str(k)+'   '+str(RMSE[0,k])+'   '+str(RMSE[1,k]))
-
+        if time.time()-t - k*delta_measure >= delta_measure:
+            k = k+1
+            if k>= em_iter_max+1:
+                break
+            RMSE[:,k] = np.linalg.norm(F[:,0:-1]-data.F[:,0:-1],2,axis=1)/np.sqrt(F.shape[1]-1)
+            T[k] = time.time()-t
+            # if k%100==0:
+            #     print(str(k)+'   '+str(RMSE[0,k])+'   '+str(RMSE[1,k]))
     return {'RMSE' : RMSE, 'T': T}
 
 def stop_rule(X,GradX):
@@ -98,6 +90,7 @@ def NNLS(Z,GtG,GtX,iterMin,iterMax,tol,idxfixed,transposed):
     for iter in range(1,iterMax+1):
         H0 = H
         H = np.maximum(Z-Grad/L,0) # Calculate squence 'Y'
+
         if transposed: # If Z = G.T
             np.put(H.T,idxfixed,0)
         else: # If Z = F
@@ -124,27 +117,3 @@ def nmf_norm_fro(X,G,F,*args):
         W=W[0]
         f = np.square(np.linalg.norm(X-np.multiply(W,np.dot(G,F)),'fro'))/np.square(np.linalg.norm(X,'fro'))
     return f
-
-def RSI_compression(X,r):
-    compressionLevel = 20
-    m,n = X.shape
-    l = min(n,max(compressionLevel,r+10))
-
-    OmegaL = np.random.randn(n,l)
-    Y = np.dot(X,OmegaL)
-    for _ in range(4):
-        Y = np.linalg.qr(Y,mode='reduced')[0]
-        S = np.dot(X.T,Y)
-        Z = np.linalg.qr(S,mode='reduced')[0]
-        Y = np.dot(X,Z)
-    L = np.linalg.qr(Y,mode='reduced')[0].T
-
-    OmegaR = np.random.randn(l,m)
-    Y = np.dot(OmegaR,X)
-    for _ in range(4):
-        Y = np.linalg.qr(Y.T,mode='reduced')[0]
-        S = np.dot(X,Y)
-        Z = np.linalg.qr(S,mode='reduced')[0]
-        Y = np.dot(Z.T,X)
-    R = np.linalg.qr(Y.T,mode='reduced')[0]
-    return L,R
