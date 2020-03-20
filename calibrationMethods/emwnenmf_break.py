@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 
 
-def emwnenmf(data, G, F, r, Tmax):
+def emwnenmf_break(data, G, F, r, Tmax):
     tol = 1e-5
     delta_measure = 1
     em_iter_max = round(Tmax / delta_measure) + 1  #
@@ -12,11 +12,8 @@ def emwnenmf(data, G, F, r, Tmax):
     RMSE = np.empty(shape=(2, em_iter_max + 1))
     RMSE.fill(np.nan)
 
-    # RRE = np.empty(shape=(em_iter_max + 1))
-    # RRE.fill(np.nan)
-
-    ITER_MAX = 100  # maximum inner iteration number (Default)
-    ITER_MIN = 5  # minimum inner iteration number (Default)
+    ITER_MAX = 200  # maximum inner iteration number (Default)
+    ITER_MIN = 10  # minimum inner iteration number (Default)
 
     np.put(F, data.idxOF, data.sparsePhi_F)
     np.put(G, data.idxOG, data.sparsePhi_G)
@@ -75,11 +72,8 @@ def emwnenmf(data, G, F, r, Tmax):
                 break
             RMSE[:, k] = np.linalg.norm(F[:, 0:-1] - data.F[:, 0:-1], 2, axis=1) / np.sqrt(F.shape[1] - 1)
             T[k] = time.time() - t
-            # RRE[k] = nmf_norm_fro(data.Xtheo, G.T, F, data.W)
             # if k%100==0:
             #     print(str(k)+'   '+str(RMSE[0,k])+'   '+str(RMSE[1,k]))
-    # plt.semilogy(RRE)
-    # plt.show()
     return {'RMSE': RMSE, 'T': T}
 
 
@@ -93,12 +87,16 @@ def NNLS(Z, GtG, GtX, iterMin, iterMax, tol, idxfixed, transposed):
     L = np.linalg.norm(GtG, 2)  # Lipschitz constant
     H = Z  # Initialization
     Grad = np.dot(GtG, Z) - GtX  # Gradient
-    alpha1 = 1
+    alpha1 = np.ones(shape=(2, 1))
 
     for iter in range(1, iterMax + 1):
         H0 = H
         H = np.maximum(Z - Grad / L, 0)  # Calculate squence 'Y'
-
+        grad_scheme = np.greater(Grad.dot(H.T - H0.T), 0)
+        if np.any(grad_scheme[:, 0]):
+            break
+        if np.any(grad_scheme[:, 1]):
+            break
         if transposed:  # If Z = G.T
             np.put(H.T, idxfixed, 0)
         else:  # If Z = F

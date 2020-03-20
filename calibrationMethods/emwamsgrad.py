@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 
 
-def emwnenmf(data, G, F, r, Tmax):
+def emwamsgrad(data, G, F, r, Tmax):
     tol = 1e-5
     delta_measure = 1
     em_iter_max = round(Tmax / delta_measure) + 1  #
@@ -50,7 +50,7 @@ def emwnenmf(data, G, F, r, Tmax):
         # Maximisation step
         # Optimize F with fixed G
         np.put(F, data.idxOF, 0)
-        F, iterF, _ = NNLS(F, GtG, GtX - GtG.dot(data.Phi_F), ITER_MIN, ITER_MAX, tolF, data.idxOF, False)
+        F, iterF, _ = amsgrad(F, GtG, GtX - GtG.dot(data.Phi_F), ITER_MIN, ITER_MAX, tolF, data.idxOF, False)
         np.put(F, data.idxOF, data.sparsePhi_F)
         # print(F[:,0:5])
         if iterF <= ITER_MIN:
@@ -61,7 +61,7 @@ def emwnenmf(data, G, F, r, Tmax):
 
         # Optimize G with fixed F
         np.put(G.T, data.idxOG, 0)
-        G, iterG, _ = NNLS(G, FFt, FXt - FFt.dot(data.Phi_G.T), ITER_MIN, ITER_MAX, tolG, data.idxOG, True)
+        G, iterG, _ = amsgrad(G, FFt, FXt - FFt.dot(data.Phi_G.T), ITER_MIN, ITER_MAX, tolG, data.idxOG, True)
         np.put(G.T, data.idxOG, data.sparsePhi_G)
         if iterG <= ITER_MIN:
             tolG = tolG / 10
@@ -89,32 +89,40 @@ def stop_rule(X, GradX):
     return np.linalg.norm(pGrad, 2)
 
 
-def NNLS(Z, GtG, GtX, iterMin, iterMax, tol, idxfixed, transposed):
-    L = np.linalg.norm(GtG, 2)  # Lipschitz constant
-    H = Z  # Initialization
-    Grad = np.dot(GtG, Z) - GtX  # Gradient
-    alpha1 = 1
+def amsgrad(Z, GtG, GtX, iterMin, iterMax, tol, idxfixed, transposed):
+
+    grad = np.dot(GtG, Z) - GtX  # Gradient
+    m = 0
+    v = 0
+    v_hat = 0
+    alpha = 1e-3
+    beta1 = 0.9
+    beta2 = 0.999
+    eps = 1e-8
 
     for iter in range(1, iterMax + 1):
-        H0 = H
-        H = np.maximum(Z - Grad / L, 0)  # Calculate squence 'Y'
-
+        bias_correction1 = 1 - beta1 ** iter
+        bias_correction2 = 1 - beta2 ** iter
+        # bias_correction1 = 1 - beta1
+        # bias_correction2 = 1 - beta2
+        m = beta1 * m + (1 - beta1) * grad
+        v = beta2 * v + (1 - beta2) * np.square(grad)
+        v_hat = np.maximum(v_hat, v)
+        denom = np.sqrt(v_hat)/np.sqrt(bias_correction2) + eps
+        Z = Z - (alpha/bias_correction1) * m / denom
         if transposed:  # If Z = G.T
-            np.put(H.T, idxfixed, 0)
+            np.put(Z.T, idxfixed, 0)
         else:  # If Z = F
-            np.put(H, idxfixed, 0)
-        alpha2 = 0.5 * (1 + np.sqrt(1 + 4 * alpha1 ** 2))
-        Z = H + ((alpha1 - 1) / alpha2) * (H - H0)
-        alpha1 = alpha2
-        Grad = np.dot(GtG, Z) - GtX
-
+            np.put(Z, idxfixed, 0)
+        Z = np.maximum(Z, 0)
         # Stopping criteria
         if iter >= iterMin:
             # Lin's stopping criteria
-            pgn = stop_rule(Z, Grad)
+            pgn = stop_rule(Z, grad)
             if pgn <= tol:
                 break
-    return H, iter, Grad
+        grad = np.dot(GtG, Z) - GtX
+    return Z, iter, grad
 
 
 def nmf_norm_fro(X, G, F, *args):

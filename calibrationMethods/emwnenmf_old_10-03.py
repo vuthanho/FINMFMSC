@@ -37,7 +37,7 @@ def emwnenmf(data,G,F,r,Tmax):
     T[k] = 0
     t = time.time()
     # Main loop
-    while(time.time()-t <= Tmax+0.05):
+    while time.time()-t <= Tmax+0.05:
 
         # Estimation step
         Xcomp = data.X + np.multiply(data.nW,np.dot(G.T,F))

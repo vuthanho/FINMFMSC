@@ -12,4 +12,4 @@ def calibrationStatistics(data,res):
     return Stat
 
 def rms(x):
-    return np.sqrt( np.mean( (x)**2) )
+    return np.sqrt(np.mean(x ** 2))

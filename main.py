@@ -13,14 +13,18 @@ Available calibration methods are   : emwnenmf (EM-W-NeNMF from [quote paper])
 import numpy as np
 import argparse
 import json
-import matplotlib.pyplot as plt
 from dataCreator import dataCreator
-from calibrationStatistics import calibrationStatistics
+# from calibrationStatistics import calibrationStatistics
 # from calibrationMethods.emwnenmf_updateinsideNNLS import emwnenmf
-from calibrationMethods.emwnenmf_seprestart import emwnenmf
+# from calibrationMethods.emwnenmf_seprestart import emwnenmf
 from calibrationMethods.incal import incal
+from calibrationMethods.emwnenmf import emwnenmf
+from calibrationMethods.emwnenmf_comp import emwnenmf_comp
+from calibrationMethods.emwnenmf_restart import emwnenmf_restart
+from calibrationMethods.emwnenmf_break import emwnenmf_break
+from calibrationMethods.emwamsgrad import emwamsgrad
+from calibrationMethods.muem import muem
 from save2dat import save2dat
-
 
 print('Work in progress')
 
@@ -40,41 +44,41 @@ Main loop
 '''
 
 data = dataCreator(config['sceneWidth'],
-        config['sceneLength'],
-        config['sensorR'],
-        config['refR'],
-        config['rdvR'],
-        config['mvR'],
-        config['phenLowerBound'],
-        config['phenUpperBound'],
-        config['Mu_beta'],
-        config['Mu_alpha'],
-        config['Bound_beta'],
-        config['Bound_alpha'])
+                   config['sceneLength'],
+                   config['numSensor'],
+                   config['numRef'],
+                   config['rdvR'],
+                   config['mvR'],
+                   config['phenLowerBound'],
+                   config['phenUpperBound'],
+                   config['Mu_beta'],
+                   config['Mu_alpha'],
+                   config['Bound_beta'],
+                   config['Bound_alpha'])
 m = data.numArea
-n = data.numSensor+1
+n = data.numSensor + 1
 RMSE = {}
 T = {}
 for method in config['calibrationMethods']:
-    RMSE.update({method : []}) 
-    T.update({method : []}) 
+    RMSE.update({method: []})
+    T.update({method: []})
 
 for run in range(config['numRuns']):
-    data.create_scene(run)
+    data.create_scene(run + 2)
     # ONLY EMWNENMF AND INCAL HAVE BEEN CODED FOR NOW
     # data.show_scene()
-    print('run : '+str(run))
+    print('run : ' + str(run))
     for method in config['calibrationMethods']:
-        print('method : '+method)
+        print('method : ' + method)
         calMethod = locals()[method]
-        res = calMethod(data,data.Ginit,data.Finit,config['r'],config['Tmax'])
+        res = calMethod(data, data.Ginit, data.Finit, config['r'], config['Tmax'])
         if run == 0:
             RMSE[method] = res['RMSE']
-            T[method]    = res['T']
+            T[method] = res['T']
         else:
-            RMSE[method] = np.vstack((RMSE[method],res['RMSE']))
-            T[method]    = np.vstack((T[method],res['T']))
-        print('RMSE : '+str(res['RMSE'][0][-1])+'   '+str(res['RMSE'][1][-1]))
-               
+            RMSE[method] = np.vstack((RMSE[method], res['RMSE']))
+            T[method] = np.vstack((T[method], res['T']))
+        print('RMSE : ' + str(res['RMSE'][0][-1]) + '   ' + str(res['RMSE'][1][-1]))
+
 if config['save2dat']:
-        save2dat(RMSE,T,config['calibrationMethods'],config['numRuns'])
+    save2dat(RMSE, T, config['calibrationMethods'], config['numRuns'])
