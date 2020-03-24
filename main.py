@@ -24,6 +24,8 @@ from calibrationMethods.emwnenmf_restart import emwnenmf_restart
 from calibrationMethods.emwnenmf_break import emwnenmf_break
 from calibrationMethods.emwamsgrad import emwamsgrad
 from calibrationMethods.muem import muem
+from calibrationMethods.emwfnnls import emwfnnls
+from calibrationMethods.emwmunmf import emwmunmf
 from save2dat import save2dat
 
 print('Work in progress')
@@ -64,7 +66,7 @@ for method in config['calibrationMethods']:
     T.update({method: []})
 
 for run in range(config['numRuns']):
-    data.create_scene(run + 2)
+    data.create_scene(run)
     # ONLY EMWNENMF AND INCAL HAVE BEEN CODED FOR NOW
     # data.show_scene()
     print('run : ' + str(run))

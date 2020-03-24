@@ -9,7 +9,7 @@ def muem(data, G, F, r, Tmax):
     RMSE = np.empty(shape=(2, iter_max + 1))
     RMSE.fill(np.nan)
 
-    mu_rate = 0.25
+    mu_rate = 0.15
     mu_res = mu(data, G, F, r, mu_rate * Tmax, T, RMSE, delta_measure)
     return em(data, mu_res['G'], mu_res['F'], r, (1 - mu_rate) * Tmax, mu_res['T'], mu_res['RMSE'], mu_res['mu_state'], delta_measure)
 
@@ -96,8 +96,8 @@ def em(data, G, F, r, Tmax, T, RMSE, mu_state, delta_measure):
     tol = 1e-5
     em_iter_max = round(Tmax / delta_measure) + 1  #
 
-    ITER_MAX = 200  # maximum inner iteration number (Default)
-    ITER_MIN = 15  # minimum inner iteration number (Default)
+    ITER_MAX = 3  # maximum inner iteration number (Default)
+    ITER_MIN = 1  # minimum inner iteration number (Default)
 
     np.put(F, data.idxOF, data.sparsePhi_F)
     np.put(G, data.idxOG, data.sparsePhi_G)
@@ -147,7 +147,7 @@ def em(data, G, F, r, Tmax, T, RMSE, mu_state, delta_measure):
 
         if time.time() - t - (k-mu_state) * delta_measure >= delta_measure:
             k = k + 1
-            if (k-mu_state) >= em_iter_max + 1:
+            if (k-mu_state) >= em_iter_max:
                 break
             RMSE[:, k] = np.linalg.norm(F[:, 0:-1] - data.F[:, 0:-1], 2, axis=1) / np.sqrt(F.shape[1] - 1)
             T[k] = T[mu_state] + time.time() - t
