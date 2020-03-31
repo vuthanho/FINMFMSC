@@ -9,7 +9,7 @@ def muem(data, G, F, r, Tmax):
     RMSE = np.empty(shape=(2, iter_max + 1))
     RMSE.fill(np.nan)
 
-    mu_rate = 0.15
+    mu_rate = 0.05
     mu_res = mu(data, G, F, r, mu_rate * Tmax, T, RMSE, delta_measure)
     return em(data, mu_res['G'], mu_res['F'], r, (1 - mu_rate) * Tmax, mu_res['T'], mu_res['RMSE'], mu_res['mu_state'], delta_measure)
 
@@ -95,6 +95,7 @@ def em(data, G, F, r, Tmax, T, RMSE, mu_state, delta_measure):
 
     tol = 1e-5
     em_iter_max = round(Tmax / delta_measure) + 1  #
+    M_loop = 5  # Number of passage over M step
 
     ITER_MAX = 3  # maximum inner iteration number (Default)
     ITER_MIN = 1  # minimum inner iteration number (Default)
@@ -124,26 +125,27 @@ def em(data, G, F, r, Tmax, T, RMSE, mu_state, delta_measure):
         X = data.X + np.multiply(data.nW, np.dot(G.T, F))
 
         # Maximisation step
-        # Optimize F with fixed G
-        np.put(F, data.idxOF, 0)
-        F, iterF, _ = NNLS(F, GtG, GtX - GtG.dot(data.Phi_F), ITER_MIN, ITER_MAX, tolF, data.idxOF, False)
-        np.put(F, data.idxOF, data.sparsePhi_F)
-        # print(F[:,0:5])
-        if iterF <= ITER_MIN:
-            tolF = tolF / 10
-            # print('Tweaked F tolerance to '+str(tolF))
-        FFt = np.dot(F, F.T)
-        FXt = np.dot(F, X.T)
+        for _ in range(M_loop):
+            # Optimize F with fixed G
+            np.put(F, data.idxOF, 0)
+            F, iterF, _ = NNLS(F, GtG, GtX - GtG.dot(data.Phi_F), ITER_MIN, ITER_MAX, tolF, data.idxOF, False)
+            np.put(F, data.idxOF, data.sparsePhi_F)
+            # print(F[:,0:5])
+            if iterF <= ITER_MIN:
+                tolF = tolF / 10
+                # print('Tweaked F tolerance to '+str(tolF))
+            FFt = np.dot(F, F.T)
+            FXt = np.dot(F, X.T)
 
-        # Optimize G with fixed F
-        np.put(G.T, data.idxOG, 0)
-        G, iterG, _ = NNLS(G, FFt, FXt - FFt.dot(data.Phi_G.T), ITER_MIN, ITER_MAX, tolG, data.idxOG, True)
-        np.put(G.T, data.idxOG, data.sparsePhi_G)
-        if iterG <= ITER_MIN:
-            tolG = tolG / 10
-            # print('Tweaked G tolerance to '+str(tolG))
-        GtG = np.dot(G, G.T)
-        GtX = np.dot(G, X)
+            # Optimize G with fixed F
+            np.put(G.T, data.idxOG, 0)
+            G, iterG, _ = NNLS(G, FFt, FXt - FFt.dot(data.Phi_G.T), ITER_MIN, ITER_MAX, tolG, data.idxOG, True)
+            np.put(G.T, data.idxOG, data.sparsePhi_G)
+            if iterG <= ITER_MIN:
+                tolG = tolG / 10
+                # print('Tweaked G tolerance to '+str(tolG))
+            GtG = np.dot(G, G.T)
+            GtX = np.dot(G, X)
 
         if time.time() - t - (k-mu_state) * delta_measure >= delta_measure:
             k = k + 1

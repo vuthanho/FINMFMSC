@@ -79,13 +79,6 @@ def incal(data, G, F, r, Tmax):
             i = i + 1
             RMSE[:, i] = np.linalg.norm(F[:, 0:-1] - data.F[:, 0:-1], 2, axis=1) / np.sqrt(F.shape[1] - 1)
             T[i] = time.time() - t
-            # RRE[i] = nmf_norm_fro(data.Xtheo, G, F, data.W)
-
-            # if i%100==0:
-            #     print(str(i)+'   '+str(RMSE[0,i])+'   '+str(RMSE[1,i]))
-    # return {'G' : G, 'F' : F, 'RMSE' : RMSE, 'T': T}
-    # plt.semilogy(RRE)
-    # plt.show()
     return {'RMSE': RMSE, 'T': T}
 
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 __author__ = "Olivier Vu thanh"
 __email__ = "olivier.vu-thanh@grenoble-inp.org"
@@ -26,6 +25,7 @@ from calibrationMethods.emwamsgrad import emwamsgrad
 from calibrationMethods.muem import muem
 from calibrationMethods.emwfnnls import emwfnnls
 from calibrationMethods.emwmunmf import emwmunmf
+from calibrationMethods.emwnenmf_m import emwnenmf_m
 from save2dat import save2dat
 
 print('Work in progress')
@@ -66,9 +66,8 @@ for method in config['calibrationMethods']:
     T.update({method: []})
 
 for run in range(config['numRuns']):
-    data.create_scene(run)
+    data.create_scene(run+5)
     # ONLY EMWNENMF AND INCAL HAVE BEEN CODED FOR NOW
-    # data.show_scene()
     print('run : ' + str(run))
     for method in config['calibrationMethods']:
         print('method : ' + method)

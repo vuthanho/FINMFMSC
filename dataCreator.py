@@ -37,17 +37,25 @@ class dataCreator:
         # Create meshgrid
         xx, yy = np.meshgrid(x, y)
         coord = np.vstack((xx.ravel(), yy.ravel())).T
-        # number of pulltion pic fixed to 10
-        for _ in range(10):
-            mean = np.squeeze(np.array([2 * (np.random.rand(1) - 0.5), 2 * (np.random.rand(1) - 0.5)]))
-            cxy = 0
-            cov = np.squeeze(np.array([[self.phenLowerBound + (self.phenUpperBound - self.phenLowerBound) * np.absolute(
-                np.random.randn(1) + 0.5), cxy],
-                                       [cxy,
-                                        self.phenLowerBound + (self.phenUpperBound - self.phenLowerBound) * np.absolute(
-                                            np.random.randn(1) + 0.5)]]))
-            z = multivariate_normal.pdf(coord, mean=mean, cov=cov)
-            self.S = self.S + z
+        # number of pollution pics fixed to 10
+
+        # MUTED FOR DEBUGGIN
+        # for _ in range(10):
+        #     mean = np.squeeze(np.array([2 * (np.random.rand(1) - 0.5), 2 * (np.random.rand(1) - 0.5)]))
+        #     cxy = 0
+        #     cov = np.squeeze(np.array([[self.phenLowerBound + (self.phenUpperBound - self.phenLowerBound) * np.absolute(
+        #         np.random.randn(1) + 0.5), cxy],
+        #                                [cxy,
+        #                                 self.phenLowerBound + (self.phenUpperBound - self.phenLowerBound) * np.absolute(
+        #                                     np.random.randn(1) + 0.5)]]))
+        #     z = multivariate_normal.pdf(coord, mean=mean, cov=cov)
+        #     self.S = self.S + z
+
+        # REMOVE THIS BLOCK AFTER DEBUG
+        z = multivariate_normal.pdf(coord, mean=[0, 0], cov=[[1, 0], [0, 1]])
+        z = z - np.min(z)
+        z = 0.5 * (z / np.max(z)) + 1e-5
+        self.S = z
 
         # Random locations for the mobile sensors and the references
         posRef = np.random.permutation(self.numArea)[0:self.numRef]  # Selection of the references
@@ -55,10 +63,6 @@ class dataCreator:
                     0:self.numRdv]  # Selection of the sensors having a rendez-vous
         idxRefRdv = np.random.randint(self.numRef,
                                       size=self.numRdv)  # Selection of the references corresponding to idxSenRdv
-
-        # ##################################################################
-        # Pourquoi les rendez-vous devraient être limités à un par capteur ?
-        # ##################################################################
 
         # idxSen = np.arange(self.numSensor)
         # idxSen = np.delete(idxSen,idxSenRdv) # Still available sensors
@@ -116,11 +120,14 @@ class dataCreator:
         self.sparsePhi_F = self.Phi_F.flat[self.idxOF]
 
         # Initial F and G
-        mu = np.array([self.Mu_alpha, self.Mu_beta])
-        mu = mu[:, np.newaxis]
-        self.Finit = np.absolute(np.add(np.random.randn(2, self.numSensor + 1), mu))
-        self.Ginit = np.random.choice(np.squeeze(self.sparsePhi_G), size=(self.numArea, 2)) + np.maximum(
-            np.min(self.sparsePhi_G), np.random.randn(self.numArea, 2))
+        self.Finit = np.squeeze([np.maximum(self.Bound_alpha[0], np.minimum(self.Bound_alpha[1],
+                                                                            self.Mu_alpha + 0.5 * np.random.randn(1,
+                                                                                                                  self.numSensor + 1))),
+                                 np.maximum(self.Bound_beta[0], np.minimum(self.Bound_beta[1],
+                                                                           self.Mu_beta + 0.5 * np.random.randn(1,
+                                                                                                                self.numSensor + 1)))])
+        self.Finit[:, -1] = [1, 0]
+        self.Ginit = np.absolute(np.mean(self.Phi_G[posRef, 0]) + np.random.randn(self.numArea, 2))
         np.put(self.Ginit, self.idxOG, self.sparsePhi_G)
 
     def show_scene(self):
